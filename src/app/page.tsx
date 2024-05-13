@@ -16,9 +16,16 @@ import {
     useSensors
 } from '@dnd-kit/core';
 import {Coordinates, CSS} from '@dnd-kit/utilities';
+import {guid} from "@/utils/guid";
 
 const getRandomNumber = (min:number, max:number) => {
     return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+const Button = ({children, onClick, className}: {children?: ReactNode; onClick?: () => void; className?: string;}) => {
+    return <div onClick={onClick} className={`flex justify-center items-center cursor-pointer bg-gray-300 ${className}`}>
+        {children}
+    </div>
 }
 
 const Folder = ({top, left, folderName, isMinimized, onMinimize, onClose}: {top: number; left: number; isMinimized: boolean; folderName: string; onMinimize: () => void; onClose: () => void;}) => {
@@ -88,7 +95,7 @@ const IconWrapper = ({children, onClick, label, left, top}: {children?: ReactNod
                 {...listeners}
                 onClick={onClick}
                 ref={setNodeRef}
-                className={'w-20 focus:border-[3px] focus:border-black focus:border-dashed absolute cursor-pointer text-sm flex flex-col items-center justify-center h-20'}
+                className={'w-20 focus:border-[3px] focus:bg-gray-300 absolute cursor-pointer text-sm flex flex-col items-center justify-center h-20'}
                 style={{...style, top, left,}}
                 {...attributes}
             >
@@ -135,7 +142,7 @@ export default function Home() {
     const [darkMode, setDarkMode] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString())
 
-    const [openedFolders, setOpenedFolders] = useState<{folderName: string; isOpen: boolean;}[]>([])
+    const [openedFolders, setOpenedFolders] = useState<{folderName: string; isOpen: boolean; id: string;}[]>([])
 
     useEffect(() => {
         const timeInterval = setInterval(() => {
@@ -148,12 +155,12 @@ export default function Home() {
 
   return (
       <>
-          {openedFolders.map(folder => <FolderWrapper key={folder.folderName} folderName={folder.folderName} isMinimized={!folder.isOpen} onMinimize={() => {
+          {openedFolders.map(folder => <FolderWrapper key={folder.id} folderName={folder.folderName} isMinimized={!folder.isOpen} onMinimize={() => {
               const currentFolders = [...openedFolders];
-              currentFolders[currentFolders.findIndex(x => x.folderName === folder.folderName)].isOpen = false;
+              currentFolders[currentFolders.findIndex(x => x.id === folder.id)].isOpen = false;
 
               setOpenedFolders(currentFolders);
-          }} onClose={() => setOpenedFolders(openedFolders.filter(x => x.folderName !== folder.folderName))} />)}
+          }} onClose={() => setOpenedFolders(openedFolders.filter(x => x.id !== folder.id))} />)}
     <div className={'w-screen h-screen max-h-screen overflow-hidden text-[#1D3557] flex flex-col'}>
         <div className={'w-full box-border relative py-2 flex justify-center items-center'}>
             {/*<div onClick={() => setDarkMode(!darkMode)} className={'absolute cursor-pointer left-4'}>*/}
@@ -166,21 +173,34 @@ export default function Home() {
         </div>
         <div className={'relative justify-center items-center'}>
             <TrashCan onClick={() => {
-                setOpenedFolders([...openedFolders, {folderName: 'test1', isOpen: true}])
+                setOpenedFolders([...openedFolders, {folderName: 'test1', isOpen: true, id: guid()}])
             }}/>
             <TrashCan onClick={() => {
-                setOpenedFolders([...openedFolders, {folderName: 'test2', isOpen: true}])
+                setOpenedFolders([...openedFolders, {folderName: 'test2', isOpen: true, id: guid()}])
             }}/>
             <TrashCan onClick={() => {
-                setOpenedFolders([...openedFolders, {folderName: 'test3', isOpen: true}])
+                setOpenedFolders([...openedFolders, {folderName: 'test3', isOpen: true, id: guid()}])
             }}/>
         </div>
         <div className={'border-t-[3px] bg-white border-black flex  w-full absolute bottom-0 h-12'}>
             <div className={'h-full cursor-pointer w-32 border-r-[3px] border-black flex items-center justify-center hover:bg-gray-300'}>
                 start
             </div>
-            <div className={'flex gap-4 items-center pl-8'}>
-                {openedFolders.map(folder => <div className={'w-48 bg-gray-200 h-full items-center px-4 flex border-x-[3px] border-black border-dashed'} key={folder.folderName}><div>{folder.folderName}</div><div onClick={() => setOpenedFolders(openedFolders.filter(x => x.folderName !== folder.folderName))} className={'ml-auto cursor-pointer'}>x</div></div>)}
+            <div className={'flex items-center'}>
+                {openedFolders.map(folder =>
+                    <div className={'w-48 bg-gray-200 h-full items-center px-2 flex border-r-[3px] border-black border-dashed'} key={folder.id}>
+                        <div>{folder.folderName}</div>
+                        <div className={'flex gap-1 ml-auto'}>
+                        <Button onClick={() => {
+                            const currentFolders = [...openedFolders];
+                            const currentState = currentFolders[currentFolders.findIndex(x => x.id === folder.id)].isOpen;
+                            currentFolders[currentFolders.findIndex(x => x.id === folder.id)].isOpen = !currentState;
+
+                            setOpenedFolders(currentFolders);
+                        }} className={'cursor-pointer w-6 h-6'}>{folder.isOpen ? '-' : '+'}</Button>
+                        <Button onClick={() => setOpenedFolders(openedFolders.filter(x => x.id !== folder.id))} className={'cursor-pointer w-6 h-6'}>x</Button>
+                        </div>
+                        </div>)}
             </div>
             <div className={'ml-auto flex items-center justify-center border-l-[3px] h-full border-black w-32'}>
                 {currentTime}
