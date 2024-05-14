@@ -4,6 +4,7 @@ import Image from "next/image";
 import LightMode from './icons/lightmode.svg';
 import DarkMode from './icons/darkmode.svg';
 import Trash from './icons/trash.svg';
+import Pointer from './icons/pointer.svg';
 import {CSSProperties, ReactNode, useEffect, useState} from "react";
 import {
     defaultCoordinates,
@@ -139,6 +140,7 @@ const TrashCan = ({onClick}: {onClick: () => void;}) => {
 }
 
 export default function Home() {
+    const [{x, y}, setMousePosition] = useState({x: 0, y: 0})
     const [darkMode, setDarkMode] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString())
 
@@ -152,9 +154,26 @@ export default function Home() {
         return () => clearInterval(timeInterval);
     }, [])
 
+    const move = (e: MouseEvent) => {
+        setMousePosition({x: (e?.clientX || 0)-8, y: (e?.clientY || 0)-2});
+    }
+
+    useEffect(() => {
+        document.addEventListener('mousemove', move)
+
+        return () => document.removeEventListener('mousemove', move);
+    })
+
 
   return (
       <>
+          <div
+              id="cursor"
+              style={{ position: 'absolute', pointerEvents: 'none', zIndex: 9999999, fill: 'white', left: `${x}px`, top: `${y}px` }}
+          >
+              <Image className={'h-8 w-8'} src={Pointer} alt={'pointer'} />
+
+          </div>
           {openedFolders.map(folder => <FolderWrapper key={folder.id} folderName={folder.folderName} isMinimized={!folder.isOpen} onMinimize={() => {
               const currentFolders = [...openedFolders];
               currentFolders[currentFolders.findIndex(x => x.id === folder.id)].isOpen = false;
